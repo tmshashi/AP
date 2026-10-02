@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="20dp"
+    tools:context=".AudioRecorder">
+
+    <Button
+        android:id="@+id/Record"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="6dp"
+        android:padding="15dp"
+        android:text="Record" />
+
+    <Button
+        android:id="@+id/Stop"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="6dp"
+        android:padding="15dp"
+        android:text="Stop" />
+
+    <Button
+        android:id="@+id/Play"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="6dp"
+        android:padding="15dp"
+        android:text="Play" />
+</LinearLayout>
+
+// Main activity java
+
+package com.example.progpb4;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.Toast;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class AudioRecorder extends AppCompatActivity {
+
+    Button start, stop, play;
+    MediaRecorder recorder;
+    MediaPlayer player;
+    String path;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+                PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        }
+
+        start = findViewById(R.id.Record);
+        stop = findViewById(R.id.Stop);
+        play = findViewById(R.id.Play);
+        path = getExternalFilesDir(null) + "/recording.3gp";
+
+        play.setEnabled(false);
+        stop.setEnabled(false);
+
+        start.setOnClickListener(v -> {
+
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            recorder.setOutputFile(path);
+
+            try {
+                recorder.prepare();
+                recorder.start();
+                start.setEnabled(false);
+                stop.setEnabled(true);
+                play.setEnabled(false);
+                Toast.makeText(this, "Recording Started",Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        stop.setOnClickListener(v -> {
+
+            recorder.stop();
+            recorder.release();
+            recorder = null;
+            start.setEnabled(true);
+            stop.setEnabled(false);
+            play.setEnabled(true);
+            Toast.makeText(this, "Recording Stopped",Toast.LENGTH_SHORT).show();
+        });
+
+        play.setOnClickListener(v -> {
+
+            player = new MediaPlayer();
+            try {
+                player.setDataSource(path);
+                player.prepare();
+                player.start();
+                play.setEnabled(false);
+
+                Toast.makeText(this, "Playing Recording",Toast.LENGTH_SHORT).show();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+}
+
+
+// manifest XML java
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ProgPB4">
+        <activity
+            android:name=".AudioRecorder"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
